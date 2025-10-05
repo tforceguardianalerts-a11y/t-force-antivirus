@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>T-FORCE SECURITY Anti-Virus</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #000; color: #fff; overflow: hidden; }
+    header { background: #111; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; height: 80px; text-align: center; font-size: 28px; font-weight: bold; -webkit-app-region: drag; }
+    header .title-text { flex-grow: 1; text-align: center; margin-left: 135px; }
+    header .tforce { color: #ff0000; }
+    header .security { color: #ffffff; }
+    header .anti { color: #ffffff; }
+    header .virus { color: #ff0000; }
+    .window-controls { display: flex; -webkit-app-region: no-drag; }
+    .window-controls button { background: none; border: none; font-size: 18px; font-weight: bold; color: #fff; padding: 10px 15px; margin: 0; }
+    .window-controls button:hover { background: #333; color: #ff0000; }
+    #closeBtn:hover { background: #ff0000; color: #fff; }
+    .container { display: flex; height: calc(100vh - 80px); }
+    .sidebar { width: 220px; background: #111; display: flex; flex-direction: column; border-right: 2px solid #ff0000; box-shadow: 2px 0 15px #ff0000; }
+    .sidebar button { background: none; border: none; padding: 18px; color: #fff; text-align: left; cursor: pointer; font-size: 16px; transition: 0.2s; }
+    .sidebar button:hover, .sidebar button.active { background: #222; color: #ff0000; text-shadow: 0 0 8px #ff0000; }
+    .content { flex: 1; padding: 20px; overflow: auto; text-align: center; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    h2 { margin-bottom: 15px; }
+    .dashboard-main-display { display: flex; justify-content: center; align-items: center; gap: 40px; margin: 20px 0; }
+    #statusShield { width: 220px; height: 220px; cursor: pointer; transition: all 0.3s; filter: drop-shadow(0 0 15px #00ff00); }
+    #statusShield.not-protected { filter: drop-shadow(0 0 25px #ff0000); }
+    #statusShield.scanning { animation: glowing-scan 1.5s infinite; cursor: not-allowed; }
+    @keyframes glowing-scan { 0% { filter: drop-shadow(0 0 15px #ff8c00); } 50% { filter: drop-shadow(0 0 35px #ff8c00); transform: scale(1.02); } 100% { filter: drop-shadow(0 0 15px #ff8c00); } }
+    .scan-controls { display: flex; justify-content: center; gap: 10px; }
+    button, input[type=checkbox], select { margin: 5px; padding: 10px 15px; background: #111; border: 1px solid #ff0000; color: #fff; cursor: pointer; transition: 0.2s; }
+    button:hover:not(:disabled) { background: #222; color: #ff0000; text-shadow: 0 0 8px #ff0000; }
+    button:disabled { cursor: not-allowed; opacity: 0.5; }
+    #scanProgressBar { width: 100%; max-width: 600px; margin: 10px auto; }
+    .threat-item { display: flex; justify-content: space-between; align-items: center; background: #111; padding: 8px; margin: 5px 0; border: 1px solid #ff0000; border-radius: 6px; text-align: left; }
+    .threat-actions button { margin-left: 5px; }
+    .vitals-grid { display: flex; justify-content: space-around; text-align: center; }
+    .vital-item h3 { margin-bottom: 15px; font-size: 18px; }
+    .vital-chart-container { position: relative; width: 120px; height: 120px; margin: 0 auto; }
+    .vital-chart-container canvas { width: 100% !important; height: 100% !important; }
+    .vital-percentage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: bold; color: #ff0000; }
+    .schedule-form { max-width: 600px; margin: 20px auto; background: #111; border: 1px solid #ff0000; padding: 20px; text-align: left; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #ff0000; }
+    .form-group select { width: 100%; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title-text">
+        <span class="tforce">T-FORCE</span> <span class="security">SECURITY</span> <span class="anti">ANTI-</span><span class="virus">VIRUS</span>
+    </div>
+    <div class="window-controls">
+        <button id="minimizeBtn">-</button>
+        <button id="maximizeBtn">□</button>
+        <button id="closeBtn">×</button>
+    </div>
+  </header>
+  <div class="container">
+    <div class="sidebar">
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="firewall">Firewall</button>
+      <button class="tab-btn" data-tab="quarantine">Quarantine</button>
+      <button class="tab-btn" data-tab="scheduledScans">Scheduled Scans</button>
+      <button class="tab-btn" data-tab="assistant">Assistant</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+    </div>
+    <div class="content">
+      <div id="dashboard" class="tab-content active">
+        <div class="dashboard-main-display">
+            <div class="vital-item">
+                <h3>CPU Load</h3>
+                <div class="vital-chart-container"><canvas id="cpuChart"></canvas><div id="cpuLoad" class="vital-percentage">0%</div></div>
+            </div>
+            <div>
+                <img id="statusShield" src="./assets/shield.png" alt="Protection Status"><p id="statusText">PROTECTED</p>
+            </div>
+            <div class="vital-item">
+                <h3>RAM Usage</h3>
+                <div class="vital-chart-container"><canvas id="ramChart"></canvas><div id="ramUsage" class="vital-percentage">0%</div></div>
+            </div>
+        </div>
+        <div class="scan-controls">
+          <button id="quickScanBtn">Quick Scan</button>
+          <button id="fullScanBtn">Full Scan</button>
+          <button id="customScanBtn">Custom Scan</button>
+          <button id="scheduledScanBtn" data-tab="scheduledScans">Scheduled Scans</button>
+        </div>
+        <progress id="scanProgressBar" value="0" max="100"></progress>
+        <p id="currentlyScanningFile"></p>
+        <ul id="activityLog"></ul>
+      </div>
+      <div id="firewall" class="tab-content">
+        <h2>Firewall</h2><button id="firewallToggle">Toggle Firewall</button><p id="firewallStatus">Firewall: Unknown</p>
+      </div>
+      <div id="quarantine" class="tab-content">
+        <h2>Quarantine</h2><ul id="threatList"></ul>
+      </div>
+      <div id="scheduledScans" class="tab-content">
+        <h2>Scheduled Scans</h2>
+        <div class="schedule-form">
+          <div class="form-group"><label for="scanFrequency">Frequency</label><select id="scanFrequency"><option value="disabled">Disabled</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
+          <div class="form-group" id="dayOfWeekGroup" style="display: none;"><label for="scanDay">Day of the Week</label><select id="scanDay"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div>
+          <div class="form-group"><label for="scanTime">Time of Day (24-hour)</label><select id="scanTime"></select></div>
+          <div class="form-group"><label for="scanType">Scan Type</label><select id="scanType"><option value="Quick">Quick Scan</option><option value="Full">Full Scan</option></select></div>
+          <button id="saveScheduleBtn">Save Schedule</button>
+        </div>
+      </div>
+      <div id="assistant" class="tab-content">
+        <h2>Assistant</h2><button id="testVoiceBtn">Speak Test</button><div id="assistantLog"></div>
+      </div>
+      <div id="settings" class="tab-content">
+        <h2>Settings</h2><label><input type="checkbox" id="enableVoice"> Enable Voice</label><br><label><input type="checkbox" id="autoQuarantine"> Auto Quarantine</label>
+      </div>
+    </div>
+  </div>
+  <script src="./node_modules/chart.js/dist/chart.umd.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
