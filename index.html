@@ -101,11 +101,12 @@
       <div id="scheduledScans" class="tab-content">
         <h2>Scheduled Scans</h2>
         <div class="schedule-form">
-          <div class="form-group"><label for="scanFrequency">Frequency</label><select id="scanFrequency"><option value="disabled">Disabled</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
-          <div class="form-group" id="dayOfWeekGroup" style="display: none;"><label for="scanDay">Day of the Week</label><select id="scanDay"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div>
+          <div class="form-group"><label for="scanFrequency">Frequency</label><select id="scanFrequency"><option value="disabled">Disabled</option><option value="DAILY">Daily</option><option value="WEEKLY">Weekly</option></select></div>
+          <div class="form-group" id="dayOfWeekGroup" style="display: none;"><label for="scanDay">Day of the Week</label><select id="scanDay"><option value="MON">Monday</option><option value="TUE">Tuesday</option><option value="WED">Wednesday</option><option value="THU">Thursday</option><option value="FRI">Friday</option><option value="SAT">Saturday</option><option value="SUN">Sunday</option></select></div>
           <div class="form-group"><label for="scanTime">Time of Day (24-hour)</label><select id="scanTime"></select></div>
           <div class="form-group"><label for="scanType">Scan Type</label><select id="scanType"><option value="Quick">Quick Scan</option><option value="Full">Full Scan</option></select></div>
           <button id="saveScheduleBtn">Save Schedule</button>
+          <button id="deleteScheduleBtn">Delete Schedule</button>
         </div>
       </div>
       <div id="assistant" class="tab-content">

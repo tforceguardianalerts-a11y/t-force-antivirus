@@ -24,7 +24,8 @@ parentPort.on('message', (msg) => {
       const stats = {
         osInfo: `${os.release()} (${os.platform()})`,
         cpuLoad: getCpuLoad(),
-        ramUsage: parseFloat(ramUsage.toFixed(2))
+        ramUsage: parseFloat(ramUsage.toFixed(2)),
+        homeDir: os.homedir()
       };
       parentPort.postMessage({ success: true, data: stats });
     } catch (e) {

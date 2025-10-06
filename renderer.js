@@ -1,191 +1,201 @@
-window.addEventListener('DOMContentLoaded', () => {
-  // --- ELEMENT SELECTORS ---
-  const allTabs = document.querySelectorAll('.tab-content');
-  const allTabBtns = document.querySelectorAll('.tab-btn');
-  const clockElement = document.getElementById('clock');
-  const statusCircle = document.getElementById('statusCircle');
-  const statusText = document.getElementById('statusText');
-  const activityLog = document.getElementById('activityLog');
-  const assistantLog = document.getElementById('assistantLog');
-  const systemInfoPanel = document.getElementById('systemInfoPanel');
-  const scanProgressBar = document.getElementById('scanProgressBar');
-  const currentlyScanningFile = document.getElementById('currentlyScanningFile');
-  const quickScanBtn = document.getElementById('quickScanBtn');
-  const fullScanBtn = document.getElementById('fullScanBtn');
-  const customScanBtn = document.getElementById('customScanBtn');
-  const scanButtons = [quickScanBtn, fullScanBtn, customScanBtn];
-  const threatListElement = document.getElementById('threatList');
-  const quarantineTabBtn = document.querySelector('.tab-btn[data-tab="quarantine"] .notification-dot');
-  const cpuLoadEl = document.getElementById('cpuLoad');
-  const ramUsageEl = document.getElementById('ramUsage');
-  const enableVoiceToggle = document.getElementById('enableVoice');
-  const autoQuarantineToggle = document.getElementById('autoQuarantine');
-  const scanOnStartupToggle = document.getElementById('scanOnStartup');
-  const appVersionSpan = document.getElementById('appVersion');
+window.addEventListener("DOMContentLoaded", async () => {
+  const allTabs = document.querySelectorAll(".tab-btn");
+  const allTabContents = document.querySelectorAll(".tab-content");
+  const statusShield = document.getElementById("statusShield");
+  const statusText = document.getElementById("statusText");
+  const quickScanBtn = document.getElementById("quickScanBtn");
+  const fullScanBtn = document.getElementById("fullScanBtn");
+  const customScanBtn = document.getElementById("customScanBtn");
+  const scheduledScanBtn = document.getElementById("scheduledScanBtn");
+  const scanButtons = [quickScanBtn, fullScanBtn, customScanBtn, scheduledScanBtn];
+  const scanProgressBar = document.getElementById("scanProgressBar");
+  const currentlyScanningFile = document.getElementById("currentlyScanningFile");
+  const activityLog = document.getElementById("activityLog");
+  const firewallBtn = document.getElementById("firewallToggle");
+  const firewallStatus = document.getElementById("firewallStatus");
+  const threatList = document.getElementById("threatList");
+  const cpuLoadEl = document.getElementById("cpuLoad");
+  const ramUsageEl = document.getElementById("ramUsage");
+  const assistantLog = document.getElementById("assistantLog");
+  const testVoiceBtn = document.getElementById("testVoiceBtn");
+  const enableVoice = document.getElementById("enableVoice");
+  const autoQuarantine = document.getElementById("autoQuarantine");
+  const minimizeBtn = document.getElementById("minimizeBtn");
+  const maximizeBtn = document.getElementById("maximizeBtn");
+  const closeBtn = document.getElementById("closeBtn");
+  const cpuChartCanvas = document.getElementById('cpuChart');
+  const ramChartCanvas = document.getElementById('ramChart');
+  const scanFrequency = document.getElementById('scanFrequency');
+  const dayOfWeekGroup = document.getElementById('dayOfWeekGroup');
+  const scanDay = document.getElementById('scanDay');
+  const scanTime = document.getElementById('scanTime');
+  const scanTypeSelect = document.getElementById('scanType');
+  const saveScheduleBtn = document.getElementById('saveScheduleBtn');
+  const deleteScheduleBtn = document.getElementById('deleteScheduleBtn');
 
-  // --- DATA STORES ---
-  let quarantineList = [];
-  let settings = {};
-  let isProtected = true;
   let scanInProgress = false;
+  let settings = {};
+  let userHomeDir = 'C:\\Users\\User';
 
-  // --- CORE FUNCTION DEFINITIONS ---
-  function renderQuarantineList() {
-    threatListElement.innerHTML = '';
-    if (quarantineList.length === 0) {
-      threatListElement.innerHTML = '<li>No threats detected. The system is clean.</li>';
-    } else {
-      quarantineList.forEach(threat => {
-        const item = document.createElement('li'); item.classList.add('threat-item');
-        item.innerHTML = `<span>${threat.filePath}</span><span>${threat.threatName}</span><span>${threat.date}</span><div class="threat-actions"><button class="delete-btn" data-id="${threat.id}">Delete</button><button class="restore-btn" data-id="${threat.id}">Restore</button></div>`;
-        threatListElement.appendChild(item);
-      });
-    }
-    document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', handleThreatAction));
-    document.querySelectorAll('.restore-btn').forEach(btn => btn.addEventListener('click', handleThreatAction));
-    quarantineTabBtn.classList.toggle('visible', quarantineList.length > 0);
+  function speak(msg) {
+    if (!settings.enableVoice) return;
+    if (speechSynthesis.speaking) return;
+    const p = document.createElement("p"); p.textContent = `> ${msg}`;
+    assistantLog.prepend(p);
+    speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
   }
-  async function handleThreatAction(event) {
-    const threatId = Number(event.target.dataset.id);
-    const action = event.target.classList.contains('delete-btn') ? 'delete' : 'restore';
-    const threat = quarantineList.find(t => t.id === threatId);
-    await window.api.quarantineAction(action, threat);
-    quarantineList = quarantineList.filter(t => t.id !== threatId);
-    await window.api.setStoreValue('quarantineList', quarantineList);
-    renderQuarantineList();
-  }
-  function updateProtectionStatus(newStatus, message) {
-    isProtected = newStatus;
-    statusCircle.classList.remove('scanning', 'red');
-    statusText.classList.remove('scanning');
-    statusCircle.classList.toggle('red', !isProtected);
+
+  function updateProtectionStatus(isProtected, message) {
+    statusShield.className = isProtected ? "" : "not-protected";
     statusText.textContent = message;
-    if (!isProtected) speak(`Warning. ${message}.`);
   }
-  let preferredVoice = null;
-  function loadVoices() {
-    const voices = speechSynthesis.getVoices();
-    preferredVoice = voices.find(v => v.name === 'Google UK English Male' && v.lang === 'en-GB') || voices.find(v => v.lang === 'en-GB' && v.gender === 'male') || voices.find(v => v.lang === 'en-US' && v.gender === 'male') || voices[0];
+
+  function createVitalChart(canvas) {
+    return new Chart(canvas.getContext('2d'), {
+      type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#ff0000', '#333'], borderColor: '#111', borderWidth: 1, cutout: '80%' }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 400 } }
+    });
   }
-  speechSynthesis.onvoiceschanged = loadVoices;
-  loadVoices();
-  function speak(message, force = false) {
-    if ((!settings.enableVoice && !force) || speechSynthesis.speaking) return;
-    const utter = new SpeechSynthesisUtterance(message);
-    if (preferredVoice) utter.voice = preferredVoice;
-    speechSynthesis.speak(utter);
-    if (assistantLog) { const logEntry = document.createElement('p'); logEntry.textContent = `> ${message}`; assistantLog.prepend(logEntry); }
-  }
-  function createLogEntry(message, type = 'info') {
-    const entry = document.createElement('li');
-    entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-    if (type === 'error') entry.style.color = 'var(--red-glow)';
-    return entry;
-  }
-  function createVitalChart(canvasId) {
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    return new Chart(ctx, { type: 'doughnut', data: { datasets: [{ data: [0, 100], backgroundColor: ['#00f7ff', '#1a223e'], borderColor: '#0a0f1c', borderWidth: 2, cutout: '80%' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: { duration: 500 } } });
-  }
-  const cpuChart = createVitalChart('cpuChart');
-  const ramChart = createVitalChart('ramChart');
+  const cpuChart = createVitalChart(cpuChartCanvas);
+  const ramChart = createVitalChart(ramChartCanvas);
+
   async function updateSystemStats() {
     const stats = await window.api.getSystemStats();
     if (stats && !stats.error) {
-      if (stats.osInfo) systemInfoPanel.textContent = `System Platform: ${stats.osInfo}`;
-      cpuLoadEl.innerText = stats.cpuLoad; ramUsageEl.innerText = stats.ramUsage;
+      if (stats.homeDir) userHomeDir = stats.homeDir;
+      cpuLoadEl.textContent = `${stats.cpuLoad.toFixed(0)}%`;
+      ramUsageEl.textContent = `${stats.ramUsage.toFixed(0)}%`;
       cpuChart.data.datasets[0].data = [stats.cpuLoad, 100 - stats.cpuLoad];
+      cpuChart.update();
       ramChart.data.datasets[0].data = [stats.ramUsage, 100 - stats.ramUsage];
-      cpuChart.update(); ramChart.update();
-    } else { cpuLoadEl.innerText = "N/A"; ramUsageEl.innerText = "N/A"; }
+      ramChart.update();
+    } else {
+      cpuLoadEl.textContent = 'N/A';
+      ramUsageEl.textContent = 'N/A';
+    }
   }
-  function updateClock() { clockElement.innerText = new Date().toLocaleTimeString('en-GB'); }
-  async function startScan(scanType, targetPath) {
+
+  function startScan(scanType, path) {
     if (scanInProgress) return;
     scanInProgress = true;
     scanButtons.forEach(b => b.disabled = true);
-    scanProgressBar.classList.add('scanning');
-    statusCircle.classList.remove('red');
-    statusCircle.classList.add('scanning');
-    statusText.classList.add('scanning');
-    statusText.textContent = `SCANNING`;
-    currentlyScanningFile.textContent = `Initializing scan...`;
-    activityLog.prepend(createLogEntry(`${scanType} scan initiated...`));
-    speak(`${scanType} scan has commenced.`);
-    await window.api.startScan(scanType, targetPath);
+    scanProgressBar.value = 0;
+    statusShield.className = "scanning";
+    statusText.textContent = "SCANNING";
+    currentlyScanningFile.textContent = `Initializing ${scanType} scan...`;
+    speak(`${scanType} scan started.`);
+    window.api.startScan(scanType, path);
   }
-  async function saveSettings() { await window.api.setStoreValue('settings', settings); }
 
-  // --- INITIALIZATION & EVENT LISTENERS ---
   (async () => {
-    try {
-      const version = await window.api.getAppVersion();
-      if(appVersionSpan) appVersionSpan.innerText = `v${version}`;
-      const stylesheet = document.getElementById('stylesheet');
-      const stylePath = await window.api.getStylePath();
-      stylesheet.setAttribute('href', stylePath);
-      settings = (await window.api.getStoreValue('settings')) || { enableVoice: true, autoQuarantine: true, scanOnStartup: false };
-      enableVoiceToggle.checked = settings.enableVoice;
-      autoQuarantineToggle.checked = settings.autoQuarantine;
-      if (scanOnStartupToggle) scanOnStartupToggle.checked = settings.scanOnStartup;
-      quarantineList = (await window.api.getStoreValue('quarantineList')) || [];
-      renderQuarantineList();
-      if (settings.scanOnStartup) startScan('Quick', 'System Startup');
-    } catch (error) { console.error("Initialization failed:", error); }
+    settings = (await window.api.getStoreValue("settings")) || { enableVoice: true, autoQuarantine: true };
+    enableVoice.checked = settings.enableVoice;
+    autoQuarantine.checked = settings.autoQuarantine;
+    firewallStatus.textContent = await window.api.getFirewallStatus();
+    updateSystemStats();
+    for (let i = 0; i < 24; i++) {
+        const hour = i.toString().padStart(2, '0');
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `${hour}:00`;
+        scanTime.appendChild(option);
+    }
+    const schedule = (await window.api.getStoreValue('scanSchedule')) || {};
+    scanFrequency.value = schedule.frequency || 'disabled';
+    scanDay.value = schedule.day || 'MON';
+    scanTime.value = schedule.time || '2';
+    scanTypeSelect.value = schedule.type || 'Quick';
+    scanFrequency.dispatchEvent(new Event('change'));
   })();
 
-  window.api.on('update-status', (message) => {
-    speak(message);
-    const updateNotification = document.getElementById('updateNotification');
-    if(updateNotification) updateNotification.textContent = message;
+  allTabs.forEach(button => {
+    button.addEventListener("click", () => {
+      allTabs.forEach(b => b.classList.remove("active"));
+      allTabContents.forEach(tc => tc.classList.remove("active"));
+      button.classList.add("active");
+      document.getElementById(button.dataset.tab).classList.add("active");
+    });
   });
 
-  window.api.onScanUpdate(async (update) => {
+  quickScanBtn.addEventListener("click", () => startScan("Quick"));
+  fullScanBtn.addEventListener("click", () => startScan("Full"));
+  customScanBtn.addEventListener("click", async () => {
+    const folderPath = await window.api.selectFolder();
+    if (folderPath) {
+        startScan("Custom", folderPath);
+    }
+  });
+  scheduledScanBtn.addEventListener("click", () => {
+    document.querySelector(`.tab-btn[data-tab='scheduledScans']`).click();
+  });
+  saveScheduleBtn.addEventListener('click', () => {
+    const schedule = { frequency: scanFrequency.value, day: scanDay.value, time: scanTime.value, type: scanTypeSelect.value };
+    if (schedule.frequency === 'disabled') {
+        window.api.deleteSchedule();
+        speak('Scan schedule deleted.');
+    } else {
+        window.api.setSchedule(schedule);
+        speak('Scan schedule saved.');
+    }
+    document.querySelector(`.tab-btn[data-tab='dashboard']`).click();
+  });
+  deleteScheduleBtn.addEventListener('click', () => {
+    window.api.deleteSchedule();
+    speak('Scan schedule deleted.');
+    scanFrequency.value = 'disabled';
+    scanFrequency.dispatchEvent(new Event('change'));
+  });
+  scanFrequency.addEventListener('change', () => {
+    dayOfWeekGroup.style.display = scanFrequency.value === 'weekly' ? 'block' : 'none';
+  });
+
+  window.api.onScanUpdate((data) => {
     scanInProgress = false;
     scanButtons.forEach(b => b.disabled = false);
-    scanProgressBar.classList.remove('scanning');
-    statusCircle.classList.remove('scanning');
-    statusText.classList.remove('scanning');
     scanProgressBar.value = 100;
-    if (update.type === 'threat') {
-      const { filePath, threatName } = update;
-      currentlyScanningFile.textContent = `Threat Found: ${threatName}`;
-      activityLog.prepend(createLogEntry(`THREAT DETECTED: ${threatName} at ${filePath}`, 'error'));
-      updateProtectionStatus(false, 'THREAT DETECTED');
-      scanProgressBar.classList.add('threat');
+    const isClean = data.threatsFound === 0;
+    updateProtectionStatus(isClean, isClean ? "PROTECTED" : "THREAT DETECTED");
+    if (data.type === "threat") {
+      currentlyScanningFile.textContent = `Threat Found: ${data.threatName}`;
+      speak(`Threat detected: ${data.threatName}`);
       if (settings.autoQuarantine) {
-        const newThreat = { id: Date.now(), filePath, threatName, date: new Date().toLocaleDateString() };
-        quarantineList.push(newThreat);
-        await window.api.setStoreValue('quarantineList', quarantineList);
-        renderQuarantineList();
-        speak('Threat automatically quarantined.');
-      } else { speak('Threat detected. Manual action required.'); }
-    } else if (update.type === 'complete') {
-      const summaryMessage = update.threatsFound > 0 ? `${update.threatsFound} threat(s) found.` : "Scan Complete. See Windows Security for results.";
-      if (update.threatsFound === -1) { currentlyScanningFile.textContent = "Scan cancelled by user."; }
-      else { currentlyScanningFile.textContent = summaryMessage; }
-      activityLog.prepend(createLogEntry(`Scan completed. ${summaryMessage}`));
-      speak('Scan is complete.');
-      if (update.threatsFound === 0) { updateProtectionStatus(true, 'PROTECTED'); }
+        window.api.addToQuarantine(data);
+        speak("Threat auto-quarantined.");
+      }
+    } else if (data.type === "complete") {
+      currentlyScanningFile.textContent = isClean ? "Scan complete. No threats found." : `${data.threatsFound} threat(s) found.`;
+      speak("Scan complete.");
     }
   });
 
-  enableVoiceToggle.addEventListener('change', (e) => { settings.enableVoice = e.target.checked; saveSettings(); speak('Voice assistant ' + (settings.enableVoice ? 'enabled.' : 'disabled.'), true); });
-  autoQuarantineToggle.addEventListener('change', (e) => { settings.autoQuarantine = e.target.checked; saveSettings(); });
-  if (scanOnStartupToggle) {
-    scanOnStartupToggle.addEventListener('change', (e) => { settings.scanOnStartup = e.target.checked; saveSettings(); window.api.setAutoLaunch(e.target.checked); });
-  }
-  allTabBtns.forEach(btn => { btn.addEventListener('click', () => { allTabs.forEach(tab => tab.classList.remove('active')); allTabBtns.forEach(b => b.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active'); btn.classList.add('active'); }); });
-  quickScanBtn.addEventListener('click', () => startScan('Quick'));
-  fullScanBtn.addEventListener('click', () => startScan('Full'));
-  customScanBtn.addEventListener('click', async () => { const folderPath = await window.api.selectFolder(); if (folderPath) startScan('Custom', folderPath); });
-  statusCircle.addEventListener('click', () => { if (scanInProgress) return; isProtected = !isProtected; updateProtectionStatus(isProtected, isProtected ? 'PROTECTED' : 'NOT PROTECTED'); });
-  let isFirewallOn = true;
-  document.getElementById('firewallToggle').addEventListener('click', () => { isFirewallOn = !isFirewallOn; document.getElementById('firewallStatus').innerText = `Firewall: ${isFirewallOn ? 'ON' : 'OFF'}`; speak(`Firewall has been ${isFirewallOn ? 'enabled.' : 'disabled'}.`); });
-  document.getElementById('testVoiceBtn').addEventListener('click', () => speak('Hello Sir. T-Force systems are online and at your command.'));
-  document.getElementById('minimizeBtn').addEventListener('click', () => window.api.minimizeWindow());
-  document.getElementById('maximizeBtn').addEventListener('click', () => window.api.maximizeWindow());
-  document.getElementById('closeBtn').addEventListener('click', () => window.api.closeWindow());
+  statusShield.addEventListener("click", () => {
+    if(scanInProgress) return;
+    const isProtected = !statusShield.classList.contains("not-protected");
+    updateProtectionStatus(!isProtected, isProtected ? "NOT PROTECTED" : "PROTECTED");
+    speak(isProtected ? "Warning! System manually marked as not protected." : "System protection restored.");
+  });
+
+  firewallBtn.addEventListener("click", async () => {
+    speak("Requesting permission to modify firewall...");
+    const status = await window.api.toggleFirewall();
+    firewallStatus.textContent = status;
+    speak(`Firewall status is now ${status}`);
+  });
   
-  setInterval(updateClock, 1000);
+  testVoiceBtn.addEventListener("click", () => speak("Hello, I am your AI assistant."));
+  
+  enableVoice.addEventListener("change", () => {
+    settings.enableVoice = enableVoice.checked;
+    window.api.setStoreValue("enableVoice", settings.enableVoice);
+  });
+  autoQuarantine.addEventListener("change", () => {
+    settings.autoQuarantine = autoQuarantine.checked;
+    window.api.setStoreValue("autoQuarantine", settings.autoQuarantine);
+  });
+  
+  minimizeBtn.addEventListener("click", () => window.api.minimizeWindow());
+  maximizeBtn.addEventListener("click", () => window.api.maximizeWindow());
+  closeBtn.addEventListener("click", () => window.api.closeWindow());
+
   setInterval(updateSystemStats, 2000);
 });
