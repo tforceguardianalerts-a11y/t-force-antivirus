@@ -1,6 +1,6 @@
 {
   "name": "t-force-antivirus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "T-Force Anti-Virus Futuristic Dashboard",
   "main": "main.js",
   "scripts": {
