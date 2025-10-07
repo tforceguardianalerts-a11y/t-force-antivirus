@@ -49,14 +49,8 @@
 </head>
 <body>
   <header>
-    <div class="title-text">
-        <span class="tforce">T-FORCE</span> <span class="security">SECURITY</span> <span class="anti">ANTI-</span><span class="virus">VIRUS</span>
-    </div>
-    <div class="window-controls">
-        <button id="minimizeBtn">-</button>
-        <button id="maximizeBtn">□</button>
-        <button id="closeBtn">×</button>
-    </div>
+    <div class="title-text"><span class="tforce">T-FORCE</span> <span class="security">SECURITY</span> <span class="anti">ANTI-</span><span class="virus">VIRUS</span></div>
+    <div class="window-controls"><button id="minimizeBtn">-</button><button id="maximizeBtn">□</button><button id="closeBtn">×</button></div>
   </header>
   <div class="container">
     <div class="sidebar">
@@ -70,34 +64,21 @@
     <div class="content">
       <div id="dashboard" class="tab-content active">
         <div class="dashboard-main-display">
-            <div class="vital-item">
-                <h3>CPU Load</h3>
-                <div class="vital-chart-container"><canvas id="cpuChart"></canvas><div id="cpuLoad" class="vital-percentage">0%</div></div>
-            </div>
-            <div>
-                <img id="statusShield" src="./assets/shield.png" alt="Protection Status"><p id="statusText">PROTECTED</p>
-            </div>
-            <div class="vital-item">
-                <h3>RAM Usage</h3>
-                <div class="vital-chart-container"><canvas id="ramChart"></canvas><div id="ramUsage" class="vital-percentage">0%</div></div>
-            </div>
+            <div class="vital-item"><h3>CPU Load</h3><div class="vital-chart-container"><canvas id="cpuChart"></canvas><div id="cpuLoad" class="vital-percentage">0%</div></div></div>
+            <div><img id="statusShield" src="./assets/shield.png" alt="Protection Status"><p id="statusText">PROTECTED</p></div>
+            <div class="vital-item"><h3>RAM Usage</h3><div class="vital-chart-container"><canvas id="ramChart"></canvas><div id="ramUsage" class="vital-percentage">0%</div></div></div>
         </div>
         <div class="scan-controls">
           <button id="quickScanBtn">Quick Scan</button>
           <button id="fullScanBtn">Full Scan</button>
           <button id="customScanBtn">Custom Scan</button>
-          <button id="scheduledScanBtn" data-tab="scheduledScans">Scheduled Scans</button>
         </div>
         <progress id="scanProgressBar" value="0" max="100"></progress>
         <p id="currentlyScanningFile"></p>
         <ul id="activityLog"></ul>
       </div>
-      <div id="firewall" class="tab-content">
-        <h2>Firewall</h2><button id="firewallToggle">Toggle Firewall</button><p id="firewallStatus">Firewall: Unknown</p>
-      </div>
-      <div id="quarantine" class="tab-content">
-        <h2>Quarantine</h2><ul id="threatList"></ul>
-      </div>
+      <div id="firewall" class="tab-content"><h2>Firewall</h2><button id="firewallToggle">Toggle Firewall</button><p id="firewallStatus">Firewall: Unknown</p></div>
+      <div id="quarantine" class="tab-content"><h2>Quarantine</h2><ul id="threatList"></ul></div>
       <div id="scheduledScans" class="tab-content">
         <h2>Scheduled Scans</h2>
         <div class="schedule-form">
@@ -105,16 +86,11 @@
           <div class="form-group" id="dayOfWeekGroup" style="display: none;"><label for="scanDay">Day of the Week</label><select id="scanDay"><option value="MON">Monday</option><option value="TUE">Tuesday</option><option value="WED">Wednesday</option><option value="THU">Thursday</option><option value="FRI">Friday</option><option value="SAT">Saturday</option><option value="SUN">Sunday</option></select></div>
           <div class="form-group"><label for="scanTime">Time of Day (24-hour)</label><select id="scanTime"></select></div>
           <div class="form-group"><label for="scanType">Scan Type</label><select id="scanType"><option value="Quick">Quick Scan</option><option value="Full">Full Scan</option></select></div>
-          <button id="saveScheduleBtn">Save Schedule</button>
-          <button id="deleteScheduleBtn">Delete Schedule</button>
+          <button id="saveScheduleBtn">Save Schedule</button><button id="deleteScheduleBtn">Delete Schedule</button>
         </div>
       </div>
-      <div id="assistant" class="tab-content">
-        <h2>Assistant</h2><button id="testVoiceBtn">Speak Test</button><div id="assistantLog"></div>
-      </div>
-      <div id="settings" class="tab-content">
-        <h2>Settings</h2><label><input type="checkbox" id="enableVoice"> Enable Voice</label><br><label><input type="checkbox" id="autoQuarantine"> Auto Quarantine</label>
-      </div>
+      <div id="assistant" class="tab-content"><h2>Assistant</h2><button id="testVoiceBtn">Speak Test</button><div id="assistantLog"></div></div>
+      <div id="settings" class="tab-content"><h2>Settings</h2><label><input type="checkbox" id="enableVoice"> Enable Voice</label><br><label><input type="checkbox" id="autoQuarantine"> Auto Quarantine</label></div>
     </div>
   </div>
   <script src="./node_modules/chart.js/dist/chart.umd.js"></script>
