@@ -1,6 +1,6 @@
 {
   "name": "t-force-antivirus",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "T-Force Anti-Virus Security Suite",
   "main": "main.js",
   "scripts": {
