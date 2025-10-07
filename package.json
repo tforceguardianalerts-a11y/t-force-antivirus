@@ -1,15 +1,19 @@
 {
   "name": "t-force-antivirus",
-  "version": "1.0.2",
-  "description": "T-Force Anti-Virus Futuristic Dashboard",
+  "version": "1.0.3",
+  "description": "T-Force Anti-Virus Security Suite",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "publish": "electron-builder --publish always"
   },
   "author": "Dimitri",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tforceguardianalerts-a11y/t-force-antivirus.git"
+  },
   "dependencies": {
     "chart.js": "^4.5.0",
     "electron-store": "^8.2.0",
@@ -17,20 +21,20 @@
   },
   "devDependencies": {
     "electron": "^31.0.2",
-    "electron-builder": "^24.13.3",
-    "electron-is-dev": "^3.0.1"
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.tforce.antivirus",
     "productName": "T-Force Anti-Virus",
     "win": {
-      "icon": "assets/icon.ico",
-      "target": "nsis"
+      "icon": "assets/icon.ico"
     },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": true,
-      "allowToChangeInstallationDirectory": true
-    }
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "tforceguardianalerts-a11y",
+        "repo": "t-force-antivirus"
+      }
+    ]
   }
 }

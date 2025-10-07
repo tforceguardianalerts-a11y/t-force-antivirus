@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld("api", {
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   closeWindow: () => ipcRenderer.send('close-window'),
+  // New Schedule API
+  setSchedule: (schedule) => ipcRenderer.invoke('set-schedule', schedule),
+  deleteSchedule: () => ipcRenderer.invoke('delete-schedule'),
 });

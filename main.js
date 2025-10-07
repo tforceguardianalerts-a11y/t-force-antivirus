@@ -3,10 +3,12 @@ const path = require("path");
 const { Worker } = require('worker_threads');
 const sudo = require('sudo-prompt');
 const Store = require("electron-store");
+const { exec } = require('child_process');
 
 const store = new Store();
 let mainWindow;
 let isFirewallOn = null;
+const taskName = "TForceAntiVirusScheduledScan";
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -17,10 +19,35 @@ function createWindow() {
   mainWindow.loadFile("index.html");
 }
 
+app.whenReady().then(createWindow);
+
+// --- IPC HANDLERS ---
+ipcMain.handle('set-schedule', (_, schedule) => {
+  const defenderPath = `C:\\Program Files\\Windows Defender\\MpCmdRun.exe`;
+  let scanArgs = `-Scan -ScanType ${schedule.type === 'Quick' ? '1' : '2'}`;
+  const time = `${schedule.time.toString().padStart(2, '0')}:00`;
+  let scheduleArgs = `/sc ${schedule.frequency} /st ${time}`;
+  if (schedule.frequency === 'WEEKLY') {
+    scheduleArgs += ` /d ${schedule.day}`;
+  }
+  const command = `schtasks /create /tn "${taskName}" /tr "'${defenderPath}' ${scanArgs}" ${scheduleArgs} /rl HIGHEST /f`;
+  sudo.exec(command, { name: 'TForce Task Scheduler' }, (error) => {
+    if (error) console.error(`Schedule Create Error: ${error}`);
+  });
+});
+
+ipcMain.handle('delete-schedule', () => {
+  const command = `schtasks /delete /tn "${taskName}" /f`;
+  sudo.exec(command, { name: 'TForce Task Scheduler' }, (error) => {
+    if (error && !error.message.includes('not found')) {
+      console.error(`Schedule Delete Error: ${error}`);
+    }
+  });
+});
+
 ipcMain.handle("start-scan", (_, scanType, customPath) => {
   const defenderPath = `'C:\\Program Files\\Windows Defender\\MpCmdRun.exe'`;
   let scanArgs = `-Scan -ScanType `;
-
   switch(scanType) {
     case 'Quick': scanArgs += '1'; break;
     case 'Full': scanArgs += '2'; break;
@@ -30,23 +57,19 @@ ipcMain.handle("start-scan", (_, scanType, customPath) => {
       break;
     default: return;
   }
-  
   const fullCommand = `powershell -Command "Start-Process -FilePath ${defenderPath} -ArgumentList '${scanArgs}' -Wait -WindowStyle Hidden"`;
   const sudoOptions = { name: 'TForce Security Scan' };
-
   sudo.exec(fullCommand, sudoOptions, (error, stdout) => {
     if (error) {
       console.error(`Sudo Exec Error: ${error}`);
       mainWindow.webContents.send('scan-update', { type: 'complete', threatsFound: -1 });
       return;
     }
-    
     const output = stdout.toString();
     let threatCount = 0;
     if (output.toLowerCase().includes("found some threats")) {
         threatCount = 1;
     }
-
     if (threatCount > 0) {
       const threatData = {
         filePath: "Threat detected by Windows Defender",
@@ -65,7 +88,6 @@ ipcMain.handle('select-folder', async () => { const { canceled, filePaths } = aw
 ipcMain.on("add-quarantine", (event, file) => { let q = store.get('quarantineList', []); q.push({ file, time: new Date().toISOString() }); store.set('quarantineList', q); });
 ipcMain.on("set-store", (_, key, value) => { store.set(key, value); });
 ipcMain.handle("get-store", (_, key) => { return store.get(key); });
-app.whenReady().then(createWindow);
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
 ipcMain.on('minimize-window', () => mainWindow?.minimize());
 ipcMain.on('maximize-window', () => mainWindow?.isMaximized() ? mainWindow.unmaximize() : mainWindow?.maximize());
